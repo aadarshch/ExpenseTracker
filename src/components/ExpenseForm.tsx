@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { CATEGORIES, CURRENCY_SYMBOL, type CategoryId } from '../constants'
 import { db } from '../db'
 import { parseAmount, todayISO } from '../utils/format'
+import AmountCalculator from './AmountCalculator'
 import DatePicker from './DatePicker'
 
 type Props = {
@@ -64,12 +65,15 @@ export default function ExpenseForm({ submitLabel, onDone }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="glass rounded-3xl p-4">
-        <label
-          htmlFor="amount"
-          className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35"
-        >
-          Amount
-        </label>
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="amount"
+            className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35"
+          >
+            Amount
+          </label>
+          <AmountCalculator value={amount} onApply={handleAmount} />
+        </div>
         <div className="mt-1 flex items-baseline gap-1.5">
           <span className="text-2xl font-semibold text-white/35">{CURRENCY_SYMBOL}</span>
           <input

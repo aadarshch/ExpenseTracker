@@ -1,5 +1,6 @@
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, Plus, Users } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
+import AmountCalculator from '../components/AmountCalculator'
 import DatePicker from '../components/DatePicker'
 import LoanForm from '../components/LoanForm'
 import Sheet from '../components/Sheet'
@@ -84,9 +85,12 @@ function SettlementForm({ person }: { person: PersonLedger }) {
 
   return (
     <form onSubmit={handleSubmit} className="glass mt-3 rounded-2xl p-3.5">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
-        Add a settlement
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+          Add a settlement
+        </p>
+        <AmountCalculator value={amount} onApply={handleAmount} />
+      </div>
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         {(

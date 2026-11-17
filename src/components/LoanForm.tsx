@@ -3,6 +3,7 @@ import { CURRENCY_SYMBOL } from '../constants'
 import { db } from '../db'
 import type { LoanDirection } from '../types'
 import { parseAmount, todayISO } from '../utils/format'
+import AmountCalculator from './AmountCalculator'
 import DatePicker from './DatePicker'
 
 type Props = {
@@ -122,7 +123,13 @@ export default function LoanForm({ onDone, people = [], initialPerson = '' }: Pr
       </label>
 
       <div className="glass rounded-2xl p-4">
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+            Amount
+          </span>
+          <AmountCalculator value={amount} onApply={handleAmount} />
+        </div>
+        <div className="mt-1 flex items-baseline gap-1.5">
           <span className="text-2xl font-semibold text-white/35">{CURRENCY_SYMBOL}</span>
           <input
             value={amount}
