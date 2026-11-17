@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Expense Tracker: dev server",
+      "type": "shell",
+      "command": "npm run dev -- --host",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PATH": "${workspaceFolder}\\.tools\\node-v24.22.3-win-x64;${env:PATH}" }
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "Expense Tracker: production build",
+      "type": "shell",
+      "command": "npm run build",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "PATH": "${workspaceFolder}\\.tools\\node-v24.22.3-win-x64;${env:PATH}" }
+      },
+      "problemMatcher": []
+    }
+  ]
+}

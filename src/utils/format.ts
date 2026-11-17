@@ -14,6 +14,11 @@ export function parseAmount(input: string): number | null {
   return minorUnits > 0 ? minorUnits : null
 }
 
+export function parseBalanceTarget(input: string): number | null {
+  if (!/^-?\d+(?:\.\d{0,2})?$/.test(input)) return null
+  return Math.round(Number(input) * 100)
+}
+
 export const toISODate = (date: Date) => {
   const offset = date.getTimezoneOffset()
   return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10)
