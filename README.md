@@ -7,10 +7,14 @@ A private, offline-first expense tracker built as an installable PWA. Track spen
 - Add, edit and delete expenses with emoji categories
 - **Money in** records (salary, refunds, gifts) that update your balance
 - **Current balance** card — tap Edit to match your real bank balance in one step
+- **Fire warning**: the balance burns red when this month's spending passes half of it, with an on-device spending insight
+- **Coin and cash animations** on the balance when money comes in or goes out
+- **Calendar** tab with per-day spend and money-in, tap a day for the full list
 - **People** ledger: track money you lent or borrowed, settle it, and see totals to receive / pay
 - Monthly history grouped by day, with totals
 - Category breakdown donut chart and 6-month trend bars
-- **Dark mode** that follows the phone setting
+- **Matte-black glass UI** tuned for iOS, with a 25–100% glass blur slider in Appearance settings
+- Full portrait and landscape layouts, safe-area aware
 - **CSV import/export** and full **JSON backup / restore**
 - Offline support and home-screen install (iOS Safari → Share → Add to Home Screen)
 - Data stays on the device (IndexedDB via Dexie)

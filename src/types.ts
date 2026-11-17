@@ -41,3 +41,16 @@ export interface Loan {
   settledAt?: number
   createdAt: number
 }
+
+export type SettlementDirection = 'received' | 'paid'
+
+export interface Settlement {
+  id?: number
+  person: string
+  // received: the person paid me back. paid: I paid the person back.
+  direction: SettlementDirection
+  amount: number
+  note: string
+  date: string
+  createdAt: number
+}

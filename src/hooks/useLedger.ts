@@ -3,19 +3,21 @@ import { db } from '../db'
 
 export function useLedger() {
   const data = useLiveQuery(async () => {
-    const [expenses, incomes, adjustments, loans] = await Promise.all([
+    const [expenses, incomes, adjustments, loans, settlements] = await Promise.all([
       db.expenses.toArray(),
       db.incomes.toArray(),
       db.adjustments.toArray(),
       db.loans.toArray(),
+      db.settlements.toArray(),
     ])
-    return { expenses, incomes, adjustments, loans }
+    return { expenses, incomes, adjustments, loans, settlements }
   }, [])
 
   const expenses = data?.expenses ?? []
   const incomes = data?.incomes ?? []
   const adjustments = data?.adjustments ?? []
   const loans = data?.loans ?? []
+  const settlements = data?.settlements ?? []
 
   const balance =
     incomes.reduce((sum, income) => sum + income.amount, 0) -
@@ -24,7 +26,18 @@ export function useLedger() {
     loans.reduce((sum, loan) => {
       if (loan.settled) return sum
       return sum + (loan.direction === 'borrowed' ? loan.amount : -loan.amount)
+    }, 0) +
+    settlements.reduce((sum, settlement) => {
+      return sum + (settlement.direction === 'received' ? settlement.amount : -settlement.amount)
     }, 0)
 
-  return { ready: data !== undefined, expenses, incomes, adjustments, loans, balance }
+  return {
+    ready: data !== undefined,
+    expenses,
+    incomes,
+    adjustments,
+    loans,
+    settlements,
+    balance,
+  }
 }

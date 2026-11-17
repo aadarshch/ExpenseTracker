@@ -20,7 +20,7 @@ export default function StatsPage() {
   const [month, setMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   )
-  const { expenses, incomes } = useLedger()
+  const { expenses, incomes, balance } = useLedger()
 
   const key = monthKey(month)
   const visible = expenses.filter((expense) => expense.date.startsWith(key))
@@ -28,6 +28,7 @@ export default function StatsPage() {
   const moneyIn = incomes
     .filter((income) => income.date.startsWith(key))
     .reduce((sum, income) => sum + income.amount, 0)
+  const balanceShare = balance > 0 ? (total / balance) * 100 : null
 
   const byCategory = CATEGORIES.map((category) => ({
     ...category,
@@ -54,25 +55,39 @@ export default function StatsPage() {
       <MonthSwitcher month={month} onChange={setMonth} />
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="glass rounded-2xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
             Money in
           </p>
-          <p className="mt-1 text-lg font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+          <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums text-[#4ade80]">
             {formatMoney(moneyIn)}
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <div className="glass rounded-2xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
             Spent
           </p>
-          <p className="mt-1 text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+          <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums text-white">
             {formatMoney(total)}
           </p>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+      <div className="glass rounded-2xl p-4">
+        <div className="flex items-baseline justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+              Spending index
+            </p>
+            <p className="mt-0.5 text-[10px] text-white/30">
+              Where this month’s money went
+            </p>
+          </div>
+          <p className="text-[10px] font-semibold tabular-nums text-[#f0d29a]">
+            {balanceShare === null ? 'No balance' : `${Math.round(balanceShare)}% of balance`}
+          </p>
+        </div>
+
         <div className="relative h-52">
           {byCategory.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -81,8 +96,8 @@ export default function StatsPage() {
                   data={byCategory}
                   dataKey="total"
                   nameKey="label"
-                  innerRadius="68%"
-                  outerRadius="92%"
+                  innerRadius="62%"
+                  outerRadius="90%"
                   paddingAngle={2}
                   strokeWidth={0}
                 >
@@ -93,40 +108,53 @@ export default function StatsPage() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+            <div className="flex h-full items-center justify-center text-sm text-white/35">
               No spending this month
             </div>
           )}
           {byCategory.length > 0 && (
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Total
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-10 text-center">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/30">
+                Spent
               </span>
-              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <span className="truncate text-xl font-semibold tracking-tight tabular-nums text-white">
                 {formatMoney(total)}
+              </span>
+              <span className="mt-0.5 text-[9px] tabular-nums text-white/35">
+                {balanceShare === null
+                  ? `Balance ${formatMoney(balance)}`
+                  : `${Math.round(balanceShare)}% of ${formatMoney(balance)}`}
               </span>
             </div>
           )}
         </div>
 
         <div className="mt-2 flex flex-col gap-3">
-          {byCategory.map((category) => {
+          {byCategory.map((category, index) => {
             const percent = total > 0 ? (category.total / total) * 100 : 0
             return (
               <div key={category.id}>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="flex min-w-0 items-center gap-1.5 font-medium text-white/65">
+                    <span className="w-4 shrink-0 text-[9px] font-semibold tabular-nums text-white/25">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
                     <span
-                      className="h-2 w-2 rounded-full"
+                      className="h-2 w-2 shrink-0 rounded-full"
                       style={{ backgroundColor: category.color }}
                     />
-                    {category.emoji} {category.label}
+                    <span className="truncate">
+                      {category.emoji} {category.label}
+                    </span>
                   </span>
-                  <span className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                  <span className="shrink-0 text-right font-semibold tabular-nums text-white/85">
                     {formatMoney(category.total)}
+                    <span className="ml-1 text-[10px] font-medium text-white/35">
+                      {Math.round(percent)}%
+                    </span>
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/5">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${percent}%`, backgroundColor: category.color }}
@@ -138,8 +166,8 @@ export default function StatsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+      <div className="glass rounded-2xl p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
           Last 6 months
         </p>
         <div className="mt-2 h-40">
@@ -149,7 +177,7 @@ export default function StatsPage() {
                 dataKey="label"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)' }}
               />
               <YAxis hide />
               <Tooltip
@@ -168,7 +196,7 @@ export default function StatsPage() {
                 {trend.map((item, index) => (
                   <Cell
                     key={item.label}
-                    fill={index === trend.length - 1 ? '#4f46e5' : '#818cf8'}
+                    fill={index === trend.length - 1 ? '#e8c27a' : 'rgba(232,194,122,0.4)'}
                   />
                 ))}
               </Bar>

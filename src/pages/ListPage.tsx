@@ -1,126 +1,249 @@
-import { Wallet } from 'lucide-react'
-import { useState } from 'react'
-import BalanceCard from '../components/BalanceCard'
-import ExpenseForm from '../components/ExpenseForm'
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  SlidersHorizontal,
+  Wallet,
+} from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import MonthSwitcher from '../components/MonthSwitcher'
-import Sheet from '../components/Sheet'
 import { categoryById } from '../constants'
 import { useLedger } from '../hooks/useLedger'
-import type { Expense } from '../types'
 import { formatDayLabel, formatMoney, monthKey } from '../utils/format'
 
-type Props = {
-  onGoAdd: () => void
+type EntryKind = 'expense' | 'income' | 'lent' | 'borrowed' | 'received' | 'paid' | 'adjustment'
+
+type Entry = {
+  key: string
+  kind: EntryKind
+  date: string
+  createdAt: number
+  title: string
+  detail: string
+  amount: number
+  icon: ReactNode
 }
 
-export default function ListPage({ onGoAdd }: Props) {
+const signedMoney = (amount: number) =>
+  `${amount > 0 ? '+' : '−'}${formatMoney(Math.abs(amount))}`
+
+export default function ListPage({ onGoAdd }: { onGoAdd: () => void }) {
   const [month, setMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   )
-  const [editing, setEditing] = useState<Expense | null>(null)
-  const { expenses, balance } = useLedger()
+  const { expenses, incomes, loans, settlements, adjustments } = useLedger()
 
   const key = monthKey(month)
-  const visible = expenses.filter((expense) => expense.date.startsWith(key))
-  const total = visible.reduce((sum, expense) => sum + expense.amount, 0)
+  const inMonth = (date: string) => date.startsWith(key)
 
-  const groups = new Map<string, Expense[]>()
-  for (const expense of visible) {
-    const group = groups.get(expense.date)
-    if (group) group.push(expense)
-    else groups.set(expense.date, [expense])
+  const entries: Entry[] = []
+
+  for (const expense of expenses) {
+    if (!inMonth(expense.date)) continue
+    const category = categoryById(expense.category)
+    entries.push({
+      key: `expense-${expense.id ?? expense.createdAt}`,
+      kind: 'expense',
+      date: expense.date,
+      createdAt: expense.createdAt,
+      title: category.label,
+      detail: expense.note,
+      amount: -expense.amount,
+      icon: (
+        <span
+          className="flex h-9 w-9 items-center justify-center rounded-full text-base"
+          style={{ backgroundColor: `${category.color}22` }}
+        >
+          {category.emoji}
+        </span>
+      ),
+    })
   }
+
+  for (const income of incomes) {
+    if (!inMonth(income.date)) continue
+    entries.push({
+      key: `income-${income.id ?? income.createdAt}`,
+      kind: 'income',
+      date: income.date,
+      createdAt: income.createdAt,
+      title: income.source || 'Money in',
+      detail: income.note,
+      amount: income.amount,
+      icon: (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#30d158]/10 text-[#4ade80]">
+          <ArrowDownLeft size={16} />
+        </span>
+      ),
+    })
+  }
+
+  for (const loan of loans) {
+    if (!inMonth(loan.date)) continue
+    const lent = loan.direction === 'lent'
+    entries.push({
+      key: `loan-${loan.id ?? loan.createdAt}`,
+      kind: lent ? 'lent' : 'borrowed',
+      date: loan.date,
+      createdAt: loan.createdAt,
+      title: lent ? `Lent to ${loan.person}` : `Borrowed from ${loan.person}`,
+      detail: loan.note,
+      amount: lent ? -loan.amount : loan.amount,
+      icon: (
+        <span
+          className={`flex h-9 w-9 items-center justify-center rounded-full ${
+            lent ? 'bg-[#ff453a]/10 text-[#ff8a80]' : 'bg-[#30d158]/10 text-[#4ade80]'
+          }`}
+        >
+          {lent ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
+        </span>
+      ),
+    })
+  }
+
+  for (const settlement of settlements) {
+    if (!inMonth(settlement.date)) continue
+    const received = settlement.direction === 'received'
+    entries.push({
+      key: `settlement-${settlement.id ?? settlement.createdAt}`,
+      kind: received ? 'received' : 'paid',
+      date: settlement.date,
+      createdAt: settlement.createdAt,
+      title: received
+        ? `Received from ${settlement.person}`
+        : `Paid ${settlement.person}`,
+      detail: settlement.note,
+      amount: received ? settlement.amount : -settlement.amount,
+      icon: (
+        <span
+          className={`flex h-9 w-9 items-center justify-center rounded-full ${
+            received ? 'bg-[#30d158]/10 text-[#4ade80]' : 'bg-[#ff453a]/10 text-[#ff8a80]'
+          }`}
+        >
+          {received ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+        </span>
+      ),
+    })
+  }
+
+  for (const adjustment of adjustments) {
+    if (!inMonth(adjustment.date) || adjustment.amount === 0) continue
+    entries.push({
+      key: `adjustment-${adjustment.id ?? adjustment.createdAt}`,
+      kind: 'adjustment',
+      date: adjustment.date,
+      createdAt: adjustment.createdAt,
+      title: 'Balance update',
+      detail: adjustment.note,
+      amount: adjustment.amount,
+      icon: (
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8c27a]/10 text-[#f0d29a]">
+          <SlidersHorizontal size={15} />
+        </span>
+      ),
+    })
+  }
+
+  const grouped = new Map<string, Entry[]>()
+  for (const entry of entries) {
+    const group = grouped.get(entry.date)
+    if (group) group.push(entry)
+    else grouped.set(entry.date, [entry])
+  }
+  const days = [...grouped.entries()].sort(([a], [b]) => (a < b ? 1 : -1))
+  for (const [, items] of days) {
+    items.sort((a, b) => b.createdAt - a.createdAt)
+  }
+
+  const moneyOut = entries
+    .filter((entry) => entry.amount < 0)
+    .reduce((sum, entry) => sum - entry.amount, 0)
+  const moneyIn = entries
+    .filter((entry) => entry.amount > 0)
+    .reduce((sum, entry) => sum + entry.amount, 0)
 
   return (
     <div className="flex flex-col gap-4">
-      <BalanceCard balance={balance} />
       <MonthSwitcher month={month} onChange={setMonth} />
 
-      <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 p-5 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-        <p className="text-xs font-medium uppercase tracking-wide text-indigo-200">Total spent</p>
-        <p className="mt-1 text-3xl font-bold tracking-tight">{formatMoney(total)}</p>
-        <p className="mt-1 text-xs text-indigo-200">
-          {visible.length} {visible.length === 1 ? 'expense' : 'expenses'}
-        </p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="glass rounded-2xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+            Money out
+          </p>
+          <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums text-[#ff8a80]">
+            {formatMoney(moneyOut)}
+          </p>
+        </div>
+        <div className="glass rounded-2xl p-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+            Money in
+          </p>
+          <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums text-[#4ade80]">
+            {formatMoney(moneyIn)}
+          </p>
+        </div>
       </div>
 
-      {visible.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/60 px-6 py-12 text-center dark:border-slate-700 dark:bg-slate-900/60">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 text-indigo-400 dark:bg-indigo-950 dark:text-indigo-400">
+      {days.length === 0 ? (
+        <div className="glass-dashed flex flex-col items-center gap-3 rounded-2xl px-6 py-12 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[#e8c27a]/70">
             <Wallet size={26} />
           </span>
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">
-              No expenses this month
-            </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Track your first one in a few seconds.
+            <p className="text-sm font-semibold text-white">No transactions this month</p>
+            <p className="mt-1 text-xs text-white/40">
+              Expenses, money in, loans and settlements all appear here.
             </p>
           </div>
           <button
             onClick={onGoAdd}
-            className="rounded-full bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-sm shadow-indigo-200 dark:shadow-none"
+            className="btn-gold rounded-full px-5 py-2 text-xs font-semibold"
           >
-            Add expense
+            Add transaction
           </button>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {[...groups.entries()].map(([date, items]) => (
+          {days.map(([date, items]) => (
             <section key={date}>
-              <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">
                 {formatDayLabel(date)}
               </p>
-              <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 dark:divide-slate-800 dark:bg-slate-900 dark:ring-slate-800">
-                {items.map((expense) => {
-                  const category = categoryById(expense.category)
-                  return (
-                    <button
-                      key={expense.id ?? `${expense.date}-${expense.createdAt}`}
-                      onClick={() => setEditing(expense)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-slate-50 dark:active:bg-slate-800"
+              <div className="glass-soft divide-hairline overflow-hidden rounded-2xl">
+                {items.map((entry) => (
+                  <div key={entry.key} className="flex items-center gap-3 px-4 py-3">
+                    <span className="shrink-0">{entry.icon}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-white/90">
+                        {entry.title}
+                      </span>
+                      <span className="block truncate text-xs text-white/35">
+                        {entry.detail}
+                      </span>
+                    </span>
+                    <span
+                      className={`shrink-0 text-sm font-semibold tabular-nums ${
+                        entry.amount > 0
+                          ? 'text-[#4ade80]'
+                          : entry.kind === 'adjustment'
+                            ? 'text-white/70'
+                            : 'text-white/85'
+                      }`}
                     >
-                      <span
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg"
-                        style={{ backgroundColor: `${category.color}26` }}
-                      >
-                        {category.emoji}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {category.label}
-                        </span>
-                        {expense.note && (
-                          <span className="block truncate text-xs text-slate-400 dark:text-slate-500">
-                            {expense.note}
-                          </span>
-                        )}
-                      </span>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                        {formatMoney(expense.amount)}
-                      </span>
-                    </button>
-                  )
-                })}
+                      {signedMoney(entry.amount)}
+                    </span>
+                  </div>
+                ))}
               </div>
             </section>
           ))}
         </div>
       )}
 
-      {editing && (
-        <Sheet onClose={() => setEditing(null)}>
-          <h2 className="mb-4 text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-            Edit expense
-          </h2>
-          <ExpenseForm
-            initial={editing}
-            submitLabel="Save changes"
-            showDelete
-            onDone={() => setEditing(null)}
-          />
-        </Sheet>
-      )}
+      <p className="px-1 pb-1 text-center text-[10px] leading-relaxed text-white/25">
+        History is read-only. Expenses, money in, loans and settlements can’t be edited once
+        saved — clearing all data in Stats erases everything.
+      </p>
     </div>
   )
 }

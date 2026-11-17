@@ -1,10 +1,11 @@
-import { ChartPie, List, Plus, Users } from 'lucide-react'
+import { CalendarDays, ChartPie, List, Plus, Users } from 'lucide-react'
 
-export type Tab = 'add' | 'list' | 'people' | 'stats'
+export type Tab = 'add' | 'list' | 'calendar' | 'people' | 'stats'
 
 const TABS = [
   { id: 'add', label: 'Add', icon: Plus },
   { id: 'list', label: 'History', icon: List },
+  { id: 'calendar', label: 'Calendar', icon: CalendarDays },
   { id: 'people', label: 'People', icon: Users },
   { id: 'stats', label: 'Stats', icon: ChartPie },
 ] as const
@@ -16,19 +17,19 @@ type Props = {
 
 export default function BottomNav({ tab, onChange }: Props) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
-      <div className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
+    <nav className="nav-glass fixed inset-x-0 bottom-0 z-40">
+      <div className="mx-auto flex max-w-md items-stretch justify-around pb-[max(0.55rem,env(safe-area-inset-bottom))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] pt-1 landscape:max-w-2xl">
         {TABS.map(({ id, label, icon: Icon }) => {
           const active = tab === id
           return (
             <button
               key={id}
               onClick={() => onChange(id)}
-              className={`flex w-16 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] font-medium transition-colors ${
-                active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'
+              className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium tracking-tight transition-colors ${
+                active ? 'text-[#f0d29a]' : 'text-white/35'
               }`}
             >
-              <Icon size={21} strokeWidth={active ? 2.4 : 1.9} />
+              <Icon size={20} strokeWidth={active ? 2.3 : 1.8} />
               {label}
             </button>
           )

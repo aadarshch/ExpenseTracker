@@ -16,18 +16,16 @@ export default function MonthSwitcher({ month, onChange }: Props) {
       <button
         onClick={() => onChange(addMonths(month, -1))}
         aria-label="Previous month"
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition active:scale-95 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800"
+        className="icon-btn"
       >
         <ChevronLeft size={16} />
       </button>
-      <p className="text-base font-semibold tracking-tight text-slate-900 dark:text-white">
-        {monthLabel(month)}
-      </p>
+      <p className="text-[15px] font-semibold tracking-tight text-white">{monthLabel(month)}</p>
       <button
         onClick={() => onChange(addMonths(month, 1))}
         disabled={!canGoNext}
         aria-label="Next month"
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition active:scale-95 disabled:opacity-30 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800"
+        className="icon-btn disabled:opacity-30"
       >
         <ChevronRight size={16} />
       </button>

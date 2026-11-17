@@ -1,4 +1,4 @@
-import { CURRENCY, LOCALE } from '../constants'
+import { CURRENCY, CURRENCY_SYMBOL, LOCALE } from '../constants'
 
 const money = new Intl.NumberFormat(LOCALE, {
   style: 'currency',
@@ -7,6 +7,22 @@ const money = new Intl.NumberFormat(LOCALE, {
 })
 
 export const formatMoney = (minorUnits: number) => money.format(minorUnits / 100)
+
+export function formatCompactMoney(minorUnits: number) {
+  const rupees = minorUnits / 100
+  const abs = Math.abs(rupees)
+  const sign = rupees < 0 ? '−' : ''
+  if (abs >= 1_00_00_000) {
+    return `${sign}${CURRENCY_SYMBOL}${(abs / 1_00_00_000).toFixed(abs >= 10_00_00_000 ? 0 : 1)}Cr`
+  }
+  if (abs >= 1_00_000) {
+    return `${sign}${CURRENCY_SYMBOL}${(abs / 1_00_000).toFixed(abs >= 10_00_000 ? 0 : 1)}L`
+  }
+  if (abs >= 1_000) {
+    return `${sign}${CURRENCY_SYMBOL}${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`
+  }
+  return `${sign}${CURRENCY_SYMBOL}${Math.round(abs)}`
+}
 
 export function parseAmount(input: string): number | null {
   if (!/^\d+(?:\.\d{0,2})?$/.test(input)) return null
@@ -25,6 +41,19 @@ export const toISODate = (date: Date) => {
 }
 
 export const todayISO = () => toISODate(new Date())
+
+export function parseISODate(iso: string) {
+  const [year, month, day] = iso.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+export function formatShortDate(iso: string) {
+  return parseISODate(iso).toLocaleDateString(LOCALE, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 
 export function formatDayLabel(iso: string) {
   const yesterday = new Date()
